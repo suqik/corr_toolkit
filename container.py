@@ -1,5 +1,6 @@
 import numpy as np
 from astropy.table import Table
+from astropy.io import fits
 import healpy as hp
 
 class SurveyData:
@@ -45,64 +46,6 @@ class SurveyData:
             **selected,
         )
 
-    @classmethod
-    def load_cosmogrid_galaxy(cls, fname):
-        galcat = Table.read(fname)
-        ra = galcat['ra']
-        dec = galcat['dec']
-        zrsd = galcat['zrsd']
-        z = galcat['z']
-        
-        w = galcat['w']
-        survey = galcat['survey']
-        
-        return cls(ra=ra, dec=dec, z=z, zrsd=zrsd, w=w, survey=survey)
-    
-    @classmethod
-    def load_cosmogrid_void(cls, fname):
-        voidcat = Table.read(fname)
-        ra = voidcat['ra']
-        dec = voidcat['dec']
-        z = voidcat['z']
-        w = voidcat['w']
-        Rv = voidcat['Rv']
-        survey = voidcat['survey']
-
-        return cls(ra=ra, dec=dec, z=z, w=w, Rv=Rv, survey=survey)
-    
-    @classmethod
-    def load_cosmogrid_rand(cls, fname):
-        randcat = Table.read(fname)
-        ra = randcat['RA']
-        dec = randcat['DEC']
-        z = randcat['Z']
-        w = np.ones_like(ra)
-        
-        return cls(ra=ra, dec=dec, z=z, w=w)
-    
-    @classmethod
-    def load_cosmogrid_shape(cls, fname):
-        shapecat = Table.read(fname)
-        ra = shapecat['ra']
-        dec = shapecat['dec']
-        z = shapecat['z']
-        z_true = shapecat['z_true']
-
-        g1 = shapecat['g1']
-        g2 = shapecat['g2']
-        g1_pure = shapecat['g1_pure']
-        g2_pure = shapecat['g2_pure']
-        w = shapecat['w']
-
-        tomo = shapecat['tomo']
-        survey = shapecat['survey']
-
-        return cls(ra=ra, dec=dec, z=z, z_true=z_true, w=w,
-                   g1=g1, g2=g2, 
-                   g1_pure=g1_pure, 
-                   g2_pure=g2_pure,
-                   tomo=tomo, survey=survey)
-
     def apply_condition_cut(self, cond:str):
         ''' 
         apply condition cut. The condition should be a valid string.
@@ -144,3 +87,137 @@ class SurveyData:
         matched_indexing = np.isin(target_pix, selected_pix)
         
         return matched_indexing
+    
+class CosmoGridSurveyData(SurveyData):
+    @classmethod
+    def load_galaxy(cls, fname):
+        galcat = Table.read(fname)
+        ra = galcat['ra']
+        dec = galcat['dec']
+        zrsd = galcat['zrsd']
+        z = galcat['z']
+        
+        w = galcat['w']
+        survey = galcat['survey']
+        
+        return cls(ra=ra, dec=dec, z=z, zrsd=zrsd, w=w, survey=survey)
+    
+    @classmethod
+    def load_void(cls, fname):
+        voidcat = Table.read(fname)
+        ra = voidcat['ra']
+        dec = voidcat['dec']
+        z = voidcat['z']
+        w = voidcat['w']
+        Rv = voidcat['Rv']
+        survey = voidcat['survey']
+
+        return cls(ra=ra, dec=dec, z=z, w=w, Rv=Rv, survey=survey)
+    
+    @classmethod
+    def load_rand(cls, fname):
+        randcat = Table.read(fname)
+        ra = randcat['RA']
+        dec = randcat['DEC']
+        z = randcat['Z']
+        w = np.ones_like(ra)
+        
+        return cls(ra=ra, dec=dec, z=z, w=w)
+    
+    @classmethod
+    def load_shape(cls, fname):
+        shapecat = Table.read(fname)
+        ra = shapecat['ra']
+        dec = shapecat['dec']
+        z = shapecat['z']
+        z_true = shapecat['z_true']
+
+        g1 = shapecat['g1']
+        g2 = shapecat['g2']
+        g1_pure = shapecat['g1_pure']
+        g2_pure = shapecat['g2_pure']
+        w = shapecat['w']
+
+        tomo = shapecat['tomo']
+        survey = shapecat['survey']
+
+        return cls(ra=ra, dec=dec, z=z, z_true=z_true, w=w,
+                   g1=g1, g2=g2, 
+                   g1_pure=g1_pure, 
+                   g2_pure=g2_pure,
+                   tomo=tomo, survey=survey)
+    
+class FastPMSurveyData(SurveyData):
+    @classmethod
+    def load_galaxy(cls, fname, irot=None):
+        if irot is not None:
+            with fits.open(fname) as hdu:
+                galcat = hdu[f"ROT{irot}"].data
+        else:
+            galcat = Table.read(fname)
+        ra = galcat['ra']
+        dec = galcat['dec']
+        zrsd = galcat['zrsd']
+        z = galcat['z']
+        
+        w = galcat['w']
+        survey = galcat['survey']
+        
+        return cls(ra=ra, dec=dec, z=z, zrsd=zrsd, w=w, survey=survey)
+    
+    @classmethod
+    def load_void(cls, fname, irot=None):
+        if irot is not None:
+            with fits.open(fname) as hdu:
+                voidcat = hdu[f"ROT{irot}"].data
+        else:
+            voidcat = Table.read(fname)
+        ra = voidcat['ra']
+        dec = voidcat['dec']
+        z = voidcat['z']
+        w = voidcat['w']
+        Rv = voidcat['Rv']
+        survey = voidcat['survey']
+
+        return cls(ra=ra, dec=dec, z=z, w=w, Rv=Rv, survey=survey)
+    
+    @classmethod
+    def load_rand(cls, fname, irot=None):
+        if irot is not None:
+            with fits.open(fname) as hdu:
+                randcat = hdu[f"ROT{irot}"].data
+        else:
+            randcat = Table.read(fname)
+        ra = randcat['RA']
+        dec = randcat['DEC']
+        z = randcat['Z']
+        w = np.ones_like(ra)
+        
+        return cls(ra=ra, dec=dec, z=z, w=w)
+    
+    @classmethod
+    def load_shape(cls, fname, irot=None):
+        if irot is not None:
+            with fits.open(fname) as hdu:
+                shapecat = hdu[f"ROT{irot}"].data
+        else:
+            shapecat = Table.read(fname)
+        ra = shapecat['ra']
+        dec = shapecat['dec']
+        z = shapecat['z']
+        z_true = shapecat['z_true']
+
+        g1 = shapecat['g1']
+        g2 = shapecat['g2']
+        g1_pure = shapecat['g1_pure']
+        g2_pure = shapecat['g2_pure']
+        w = shapecat['w']
+
+        tomo = shapecat['tomo']
+        survey = shapecat['survey']
+
+        return cls(ra=ra, dec=dec, z=z, z_true=z_true, w=w,
+                   g1=g1, g2=g2, 
+                   g1_pure=g1_pure, 
+                   g2_pure=g2_pure,
+                   tomo=tomo, survey=survey)

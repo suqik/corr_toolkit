@@ -183,7 +183,13 @@ class GGLCalculator:
         return lens_cat
 
     def get_Rv_mean_mpch(self, lens_cat:SurveyData):
-        self.Rv_mean_mpch = np.median(lens_cat.Rv)
+        # self.Rv_mean_mpch = np.median(lens_cat.Rv)
+        rvmin = np.min(lens_cat.Rv)
+        rvmax = np.max(lens_cat.Rv)
+        rvbin_edges = np.linspace(rvmin, rvmax, 101)
+        nRv, _ = np.histogram(lens_cat.Rv, bins=rvbin_edges)
+        rvbins = 0.5*(rvbin_edges[1:] + rvbin_edges[:-1])
+        self.Rv_mean_mpch = np.average(rvbins, weights=nRv)
         return self.Rv_mean_mpch
 
     def compute_pairs(self, cosmo_dict:dict, 
